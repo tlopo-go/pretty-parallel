@@ -2,8 +2,9 @@ package commandrunner
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
-	"github.com/pkg/errors"
+	"github.com/tlopo-go/concurrency/thread"
 	"github.com/tlopo-go/pretty-parallel/color"
 	"io"
 	"os"
@@ -17,6 +18,7 @@ type CommandRunner struct {
 	padding           int
 	err               error
 	outputFile        string
+	logPath           string
 	outputFileHandler *os.File
 }
 
@@ -24,6 +26,7 @@ func New() (cr *CommandRunner) {
 	cr = &CommandRunner{}
 	cr.name = "no-name"
 	cr.padding = 0
+	cr.logPath = "/tmp"
 	return
 }
 
@@ -42,6 +45,11 @@ func (cr *CommandRunner) Padding(padding int) *CommandRunner {
 	return cr
 }
 
+func (cr *CommandRunner) LogPath(value string) *CommandRunner {
+	cr.logPath = value
+	return cr
+}
+
 func (cr *CommandRunner) Error() error {
 	return cr.err
 }
@@ -51,7 +59,7 @@ func (cr *CommandRunner) Run() *CommandRunner {
 	outPrefix := color.Green(fmt.Sprintf("%s%s |", strings.Repeat(" ", cr.padding), cr.name))
 	errPrefix := color.Red(fmt.Sprintf("%s%s |", strings.Repeat(" ", cr.padding), cr.name))
 
-	cr.outputFile = fmt.Sprintf(".%s.out", cr.name)
+	cr.outputFile = fmt.Sprintf("%s/.%s.out", cr.logPath, cr.name)
 	cr.outputFileHandler, err = os.OpenFile(cr.outputFile, os.O_RDWR|os.O_CREATE, 0666)
 	if err != nil {
 		panic(err)
@@ -71,10 +79,19 @@ func (cr *CommandRunner) Run() *CommandRunner {
 	}
 
 	// Stream stdout
-	go stream(outPrefix, writer, stdout)
+	outThread := thread.New(func() (err error) {
+		stream(outPrefix, writer, stdout)
+		return
+	}).Start()
 
 	// Stream stderr
-	go stream(errPrefix, writer, stderr)
+	errThread := thread.New(func() (err error) {
+		stream(errPrefix, writer, stderr)
+		return
+	}).Start()
+
+	outThread.Join()
+	errThread.Join()
 
 	// Wait for the command to exit
 	if err := cmd.Wait(); err != nil {
@@ -85,7 +102,7 @@ func (cr *CommandRunner) Run() *CommandRunner {
 }
 
 func logErrorToOutputFile(prefix string, w io.Writer, err error) {
-	for _, line := range strings.Split(fmt.Sprintf("%+v", err), "\n") {
+	for _, line := range strings.Split(err.Error(), "\n") {
 		fmt.Fprintf(w, "%s %s\n", prefix, line)
 	}
 }
@@ -94,12 +111,20 @@ func stream(prefix string, w io.Writer, r io.Reader) {
 	reader := bufio.NewReader(r)
 	for {
 		line, err := reader.ReadString('\n')
-		if err != nil {
+		if err != nil && err != io.EOF {
 			if err != io.EOF {
 				fmt.Println(prefix, "read error:", err)
 			}
 			break
 		}
-		fmt.Fprintf(w, "%s %s", prefix, line)
+
+		if len(line) > 0 {
+			fmt.Fprintf(w, "%s %s\n", prefix, strings.TrimRight(line, "\n"))
+		}
+
+		if err == io.EOF {
+			break
+		}
+
 	}
 }
