@@ -77,9 +77,16 @@ func (pr *ParallelRunner) Run() *ParallelRunner {
 
 	exec := executor.New().Concurrency(pr.concurrency).Jobs(jobs).Run()
 	for _, task := range pr.tasks {
-		bannerLineSize := (getTerminalWidth() - len(task.Name) - 4) / 2
-		bannerLine := strings.Repeat("=", bannerLineSize)
-		fmt.Print(color.Yellow(fmt.Sprintf("%s[ %s ]%s\n", bannerLine, task.Name, bannerLine)))
+		var rightFill string
+		fillSize := (getTerminalWidth() - len(task.Name) - 4) / 2
+		leftFill := strings.Repeat("=", fillSize)
+		if len(task.Name)%2 == 0 {
+			rightFill = leftFill
+		} else {
+			rightFill = leftFill + "="
+		}
+
+		fmt.Print(color.Yellow(fmt.Sprintf("%s[ %s ]%s\n", leftFill, task.Name, rightFill)))
 		data, _ := os.ReadFile(fmt.Sprintf("%s/.%s.out", tmpDir, task.Name))
 		fmt.Print(string(data))
 		fmt.Print(color.Yellow(fmt.Sprintf("%s\n", strings.Repeat("=", getTerminalWidth()))))
