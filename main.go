@@ -5,7 +5,6 @@ import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	pr "github.com/tlopo-go/pretty-parallel/parallel-runner"
-	"golang.org/x/sys/unix"
 	"gopkg.in/yaml.v2"
 	"io"
 	"os"
@@ -41,30 +40,6 @@ func main() {
 			os.Exit(1)
 		}
 	})
-}
-
-func withTerminalCleanup(fn func()) {
-	// Open controlling terminal
-	tty, err := os.Open("/dev/tty")
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "cannot open /dev/tty: %v\n", err)
-		return
-	}
-	defer tty.Close()
-	fd := int(tty.Fd())
-
-	// Backup current state
-	oldState, err := unix.IoctlGetTermios(fd, unix.TIOCGETA)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "cannot get termios: %v\n", err)
-		return
-	}
-
-	// Ensure state is restored on exit
-	defer func() {
-		unix.IoctlSetTermios(fd, unix.TIOCSETA, oldState)
-	}()
-	fn()
 }
 
 func getTasks() (tasks []*pr.Task) {
