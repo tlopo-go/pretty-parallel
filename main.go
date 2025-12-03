@@ -55,8 +55,11 @@ func getTasks() (tasks []*pr.Task) {
 		switch v := cmd.(type) {
 		case string:
 			command = []string{"sh", "-c", v}
-		case []string:
-			command = v
+		case []interface{}:
+			command = []string{}
+			for _, i := range v {
+				command = append(command, i.(string))
+			}
 		default:
 			panic("Command must be of type string or []string")
 		}
