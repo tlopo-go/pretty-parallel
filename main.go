@@ -11,11 +11,18 @@ import (
 	"regexp"
 )
 
+var (
+	version string
+	commit  string
+	date    string
+)
+
 func main() {
 
 	withTerminalCleanup(func() {
 		flag.Usage = func() {
-			fmt.Println("pretty-parallel [OPTS] < input")
+			fmt.Printf("Version: %s, Commit: %s, Date: %s\n", version, commit, date)
+			fmt.Println("\nUSAGE:\npretty-parallel [OPTS] < input")
 			flag.PrintDefaults()
 			notes := regexp.MustCompile(` {16}`).ReplaceAllString(`
                 NOTES:
