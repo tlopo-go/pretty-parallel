@@ -7,8 +7,10 @@ import (
 	"github.com/tlopo-go/pretty-parallel/color"
 	cr "github.com/tlopo-go/pretty-parallel/command-runner"
 	"golang.org/x/term"
+	"hash/crc32"
 	"io/ioutil"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -66,7 +68,8 @@ func (pr *ParallelRunner) Run() *ParallelRunner {
 	for _, task := range pr.tasks {
 		padding := longestNameSize - len(task.Name)
 		job := func() (err error) {
-			err = cr.New().Command(task.Command).Name(task.Name).LogPath(tmpDir).Padding(padding).Run().Error()
+			logFile := fmt.Sprintf("%s/%s", tmpDir, getShortHash(task.Name))
+			err = cr.New().Command(task.Command).Name(task.Name).LogFile(logFile).Padding(padding).Run().Error()
 			if err != nil {
 				err = errors.New(fmt.Sprintf("%s failed, %s", task.Name, err.Error()))
 			}
@@ -87,7 +90,8 @@ func (pr *ParallelRunner) Run() *ParallelRunner {
 		}
 
 		fmt.Print(color.Yellow(fmt.Sprintf("%s[ %s ]%s\n", leftFill, task.Name, rightFill)))
-		data, _ := os.ReadFile(fmt.Sprintf("%s/.%s.out", tmpDir, task.Name))
+		logFile := fmt.Sprintf("%s/%s", tmpDir, getShortHash(task.Name))
+		data, _ := os.ReadFile(logFile)
 		fmt.Print(string(data))
 		fmt.Print(color.Yellow(fmt.Sprintf("%s\n", strings.Repeat("=", getTerminalWidth()))))
 	}
@@ -111,12 +115,6 @@ func getTerminalWidth() int {
 	return width
 }
 
-func withTempDir(f func(string) error) error {
-	tmp, err := ioutil.TempDir("", "")
-	if err != nil {
-		return err
-	}
-	defer os.RemoveAll(tmp)
-
-	return f(tmp)
+func getShortHash(value string) string {
+	return strconv.FormatUint(uint64(crc32.ChecksumIEEE([]byte(value))), 36)
 }

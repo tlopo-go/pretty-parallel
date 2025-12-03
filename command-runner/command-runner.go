@@ -18,7 +18,7 @@ type CommandRunner struct {
 	padding           int
 	err               error
 	outputFile        string
-	logPath           string
+	logFile           string
 	outputFileHandler *os.File
 }
 
@@ -26,7 +26,6 @@ func New() (cr *CommandRunner) {
 	cr = &CommandRunner{}
 	cr.name = "no-name"
 	cr.padding = 0
-	cr.logPath = "/tmp"
 	return
 }
 
@@ -45,8 +44,8 @@ func (cr *CommandRunner) Padding(padding int) *CommandRunner {
 	return cr
 }
 
-func (cr *CommandRunner) LogPath(value string) *CommandRunner {
-	cr.logPath = value
+func (cr *CommandRunner) LogFile(value string) *CommandRunner {
+	cr.logFile = value
 	return cr
 }
 
@@ -59,8 +58,7 @@ func (cr *CommandRunner) Run() *CommandRunner {
 	outPrefix := color.Green(fmt.Sprintf("%s%s |", strings.Repeat(" ", cr.padding), cr.name))
 	errPrefix := color.Red(fmt.Sprintf("%s%s |", strings.Repeat(" ", cr.padding), cr.name))
 
-	cr.outputFile = fmt.Sprintf("%s/.%s.out", cr.logPath, cr.name)
-	cr.outputFileHandler, err = os.OpenFile(cr.outputFile, os.O_RDWR|os.O_CREATE, 0666)
+	cr.outputFileHandler, err = os.OpenFile(cr.logFile, os.O_RDWR|os.O_CREATE, 0666)
 	if err != nil {
 		panic(err)
 	}
