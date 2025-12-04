@@ -14,12 +14,12 @@ It's easy enough to run commands in parallel, but the output will be messy and y
 
 With one-liner: 
 ```
-curl 'https://github.com/tlopo-go/flat/releases/download/v0.0.3/pretty-parallel_0.0.3_darwin_amd64.tar.gz' -s -L | tar -C /usr/local/bin  -xzf -  pretty-parallel
+curl 'https://github.com/tlopo-go/pretty-parallel/releases/download/v0.0.3/pretty-parallel_0.0.3_darwin_arm64.tar.gz' -s -L | tar -C /usr/local/bin  -xzf -  pretty-parallel
 ```
 
 One-liner on windows git-bash
 ```
-curl 'https://github.com/tlopo-go/flat/releases/download/v0.0.0.3/pretty-parallel_0.0.3_windows_amd64.tar.gz' -s -L | tar -C /usr/bin  -xzf -  pretty-parallel.exe
+curl 'https://github.com/tlopo-go/pretty-parallel/releases/download/v0.0.3/pretty-parallel_0.0.3_windows_amd64.tar.gz' -s -L | tar -C /usr/bin  -xzf -  pretty-parallel.exe
 ```
 
 ## USAGE:
